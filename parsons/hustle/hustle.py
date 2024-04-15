@@ -1,13 +1,15 @@
-from parsons.etl import Table
-from requests import request
-from parsons.utilities import check_env, json_format
 import datetime
-from parsons.hustle.column_map import LEAD_COLUMN_MAP
 import logging
+
+from requests import request
+
+from parsons.etl import Table
+from parsons.hustle.column_map import LEAD_COLUMN_MAP
+from parsons.utilities import check_env, json_format
 
 logger = logging.getLogger(__name__)
 
-HUSTLE_URI = "https://api.hustle.com/v1/"
+HUSTLE_URI = "https://api.hustle.com/v2/"
 PAGE_LIMIT = 1000
 
 
@@ -269,6 +271,44 @@ class Hustle(object):
         logger.info(f"Got {group_id} group.")
         return r
 
+    def create_group(self,
+                     organization_id,
+                     name,
+                     country_code,
+                     location_label,
+                     lat,
+                     lng):
+        """
+        Create a group.
+
+        `Args:`
+            organization_id: str
+                The organization id.
+            name: str
+                The name of the group.
+            country_code: str
+                Enum of country code for the groups lcation.
+                Option Examples: "US" "CA" "PR".
+            location_label: str
+                The location label of the group.
+            lat: float
+                The latitude of the location for the group.
+            lng: float
+                The longitude of the location for the group.
+        """
+        location = {
+            "label": location_label,
+            "lat": lat,
+            "lng": lng,
+        }
+        group = {
+            "name": name,
+            "countryCode": country_code,
+            "location": location,
+        }
+        logger.info(f"Creating Group {name}.")
+        return self._request(f"/organizations/{organization_id}/groups", req_type="POST", payload=group)
+
     def create_group_membership(self, group_id, lead_id):
         """
         Add a lead to a group.
@@ -285,6 +325,24 @@ class Hustle(object):
             req_type="POST",
             payload={"leadId": lead_id},
         )
+
+    def update_group_membership(self, group_id, lead_id, active):
+        """
+        Update a group membership.
+
+        `Args:`
+            group_id: str
+                The group id.
+            lead_id: str
+                The lead id.
+            active: boolean
+                The active status of the lead.
+        """
+
+        lead_status = {"leadId": lead_id,
+                       "active": active}
+
+        return self._request(f"/groups/{group_id}/memberships", req_type="PUT", payload=lead_status)
 
     def get_lead(self, lead_id):
         """
@@ -544,3 +602,25 @@ class Hustle(object):
         r = self._request(f"tags/{tag_id}")
         logger.info(f"Got {tag_id} tag.")
         return r
+
+    def create_tag(self, organization_id, name, agent_visability):
+        """
+        Create a tag.
+
+        `Args:`
+            organization_id: str
+                The organization id.
+            name: str
+                The name of the tag.
+            agent_visability: str
+                The agent visibility of the tag.
+                Options: "LEAD_PROFILES", "OPT_OUT", "NEVER"
+        `Returns:`
+            dict
+        """
+        agent_visability_options = ["LEAD_PROFILES", "OPT_OUT", "NEVER"]
+        if agent_visability not in agent_visability_options:
+            raise ValueError(f"Agent visibility must be one of {agent_visability_options}.")
+        tag = {"name": name, "agentVisibility": agent_visability}
+        logger.info(f"Creating tag {name}.")
+        return self._request(f"organizations/{organization_id}/tags", req_type="POST", payload=tag)
