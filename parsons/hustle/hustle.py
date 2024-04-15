@@ -307,7 +307,7 @@ class Hustle(object):
             "location": location,
         }
         logger.info(f"Creating Group {name}.")
-        return self._request(f"/organizations/{organization_id}/groups", req_type="POST", payload=group)
+        return self._request(f"organizations/{organization_id}/groups", req_type="POST", payload=group)
 
     def create_group_membership(self, group_id, lead_id):
         """
@@ -342,7 +342,7 @@ class Hustle(object):
         lead_status = {"leadId": lead_id,
                        "active": active}
 
-        return self._request(f"/groups/{group_id}/memberships", req_type="PUT", payload=lead_status)
+        return self._request(f"groups/{group_id}/memberships", req_type="PUT", payload=lead_status)
 
     def get_lead(self, lead_id):
         """
