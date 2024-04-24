@@ -271,13 +271,7 @@ class Hustle(object):
         logger.info(f"Got {group_id} group.")
         return r
 
-    def create_group(self,
-                     organization_id,
-                     name,
-                     country_code,
-                     location_label,
-                     lat,
-                     lng):
+    def create_group(self, organization_id, name, country_code, location_label, lat, lng):
         """
         Create a group.
 
@@ -307,7 +301,9 @@ class Hustle(object):
             "location": location,
         }
         logger.info(f"Creating Group {name}.")
-        return self._request(f"organizations/{organization_id}/groups", req_type="POST", payload=group)
+        return self._request(
+            f"organizations/{organization_id}/groups", req_type="POST", payload=group
+        )
 
     def create_group_membership(self, group_id, lead_id):
         """
@@ -339,8 +335,7 @@ class Hustle(object):
                 The active status of the lead.
         """
 
-        lead_status = {"leadId": lead_id,
-                       "active": active}
+        lead_status = {"leadId": lead_id, "active": active}
 
         return self._request(f"groups/{group_id}/memberships", req_type="PUT", payload=lead_status)
 
@@ -391,7 +386,137 @@ class Hustle(object):
         logger.info(f"Got {tbl.num_rows} leads.")
         return tbl
 
+
     def create_lead(
+        self,
+        organization_id,
+        phone_number,
+        first_name,
+        last_name=None,
+        email=None,
+        notes=None,
+        follow_up=None,
+        custom_fields=None,
+        tag_ids=None,
+    ):
+        """
+        Create a lead or update a lead in an organization.
+
+        `Args:`
+            organization_id: str
+                The organization id.
+            first_name: str
+                The first name of the lead.
+            phone_number: str
+                The phone number of the lead.
+            last_name: str
+                The last name of the lead.
+            email: str
+                The email address of the lead.
+            notes: str
+                The notes for the lead.
+            follow_up: str
+                Follow up for the lead.
+            custom_fields: dict
+                A dictionary of custom fields, with key as the value name, and
+                value as the value.
+            tag_ids: list
+                A list of tag ids.
+        `Returns:`
+            dict
+        """
+
+
+        lead = {
+            "firstName": first_name,
+            "lastName": last_name,
+            "email": email,
+            "phoneNumber": phone_number,
+            "notes": notes,
+            "followUp": follow_up,
+            "customFields": custom_fields,
+            "tagIds": tag_ids,
+        }
+
+        # Remove empty args in dictionary
+        lead = json_format.remove_empty_keys(lead)
+        logger.info(f"Generating lead for {first_name} {last_name}.")
+        return self._request(f"organizations/{organization_id}/leads", req_type="POST", payload=lead)
+
+    def create_leads(self, table, organization_id=None):
+        """
+        Create multiple leads. All unrecognized fields will be passed as custom fields. Column
+        names must map to the following names.
+
+        .. list-table::
+            :widths: 20 80
+            :header-rows: 1
+
+            * - Column Name
+              - Valid Column Names
+            * - first_name
+              - ``first_name``, ``first``, ``fn``, ``firstname``
+            * - last_name
+              - ``last_name``, ``last``, ``ln``, ``lastname``
+            * - phone_number
+               - ``phone_number``, ``phone``, ``cell``, ``phonenumber``, ``cell_phone``
+                ``cellphone``
+            * - email
+              - ``email``, ``email_address``, ``emailaddress``
+            * - follow_up
+              - ``follow_up``, ``followup``
+
+        `Args:`
+            table: Parsons table
+                A Parsons table containing leads
+            group_id:
+                The group id to assign the leads. If ``None``, must be passed as a column
+                value.
+        `Returns:`
+            A table of created ids with associated lead id.
+        """
+
+        table.map_columns(LEAD_COLUMN_MAP)
+
+        arg_list = [
+            "first_name",
+            "last_name",
+            "email",
+            "phone_number",
+            "follow_up",
+            "tag_ids",
+            "organization_id",
+        ]
+
+        created_leads = []
+
+        for row in table:
+
+            lead = {"organization_id": organization_id}
+            custom_fields = {}
+
+            # Check for column names that map to arguments, if not assign
+            # to custom fields
+            for k, v in row.items():
+                if k in arg_list:
+                    lead[k] = v
+                else:
+                    custom_fields[k] = v
+
+            lead["custom_fields"] = custom_fields
+
+            # Group Id check
+            if not organization_id and "organization_id" not in table.columns:
+                raise ValueError("Group Id must be passed as an argument or a column value.")
+            if organization_id:
+                lead["organization_id"] = organization_id
+
+            created_leads.append(self.create_lead(**lead))
+
+        logger.info(f"Created {table.num_rows} leads.")
+        return Table(created_leads)
+
+    def create_lead_in_group(
         self,
         group_id,
         phone_number,
@@ -405,7 +530,7 @@ class Hustle(object):
     ):
         """
 
-        Create a lead.
+        Create a lead or add it to a group or update a lead in a group.
 
         `Args:`
             group_id: str
@@ -447,7 +572,7 @@ class Hustle(object):
         logger.info(f"Generating lead for {first_name} {last_name}.")
         return self._request(f"groups/{group_id}/leads", req_type="POST", payload=lead)
 
-    def create_leads(self, table, group_id=None):
+    def create_leads_in_group(self, table, group_id=None):
         """
         Create multiple leads. All unrecognized fields will be passed as custom fields. Column
         names must map to the following names.
@@ -515,7 +640,7 @@ class Hustle(object):
             if group_id:
                 lead["group_id"] = group_id
 
-            created_leads.append(self.create_lead(**lead))
+            created_leads.append(self.create_lead_in_group(**lead))
 
         logger.info(f"Created {table.num_rows} leads.")
         return Table(created_leads)
