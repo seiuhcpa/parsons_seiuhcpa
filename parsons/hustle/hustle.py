@@ -387,7 +387,7 @@ class Hustle(object):
         return tbl
 
 
-    def create_lead(
+    def create_lead_in_organization(
         self,
         organization_id,
         phone_number,
@@ -443,7 +443,7 @@ class Hustle(object):
         logger.info(f"Generating lead for {first_name} {last_name}.")
         return self._request(f"organizations/{organization_id}/leads", req_type="POST", payload=lead)
 
-    def create_leads(self, table, organization_id=None):
+    def create_leads_in_organization(self, table, organization_id=None):
         """
         Create multiple leads. All unrecognized fields will be passed as custom fields. Column
         names must map to the following names.
@@ -516,7 +516,7 @@ class Hustle(object):
         logger.info(f"Created {table.num_rows} leads.")
         return Table(created_leads)
 
-    def create_lead_in_group(
+    def create_lead(
         self,
         group_id,
         phone_number,
@@ -572,7 +572,7 @@ class Hustle(object):
         logger.info(f"Generating lead for {first_name} {last_name}.")
         return self._request(f"groups/{group_id}/leads", req_type="POST", payload=lead)
 
-    def create_leads_in_group(self, table, group_id=None):
+    def create_leads(self, table, group_id=None):
         """
         Create multiple leads. All unrecognized fields will be passed as custom fields. Column
         names must map to the following names.
