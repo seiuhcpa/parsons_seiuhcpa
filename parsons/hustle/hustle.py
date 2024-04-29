@@ -641,7 +641,7 @@ class Hustle(object):
             if group_id:
                 lead["group_id"] = group_id
 
-            created_leads.append(self.create_lead_in_group(**lead))
+            created_leads.append(self.create_lead(**lead))
 
         logger.info(f"Created {table.num_rows} leads.")
         return Table(created_leads)
