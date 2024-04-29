@@ -71,7 +71,8 @@ class Hustle(object):
         url = self.uri + endpoint
         self._token_check()
 
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        headers = {"Authorization": f"Bearer {self.auth_token}",
+                   "Content-type": 'application/json'}
 
         parameters = {}
         if req_type == "GET":
