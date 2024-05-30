@@ -729,7 +729,7 @@ class Hustle(object):
         logger.info(f"Got {tag_id} tag.")
         return r
 
-    def create_tag(self, organization_id, name, agent_visability):
+    def create_tag(self, organization_id, name, agent_visibility):
         """
         Create a tag.
 
@@ -744,9 +744,9 @@ class Hustle(object):
         `Returns:`
             dict
         """
-        agent_visability_options = ["LEAD_PROFILES", "OPT_OUT", "NEVER"]
-        if agent_visability not in agent_visability_options:
-            raise ValueError(f"Agent visibility must be one of {agent_visability_options}.")
-        tag = {"name": name, "agentVisibility": agent_visability}
+        agent_visibility_options = ["LEAD_PROFILES", "OPT_OUT", "NEVER"]
+        if agent_visibility not in agent_visibility_options:
+            raise ValueError(f"Agent visibility must be one of {agent_visibility_options}.")
+        tag = {"name": name, "agentVisibility": agent_visibility}
         logger.info(f"Creating tag {name}.")
         return self._request(f"organizations/{organization_id}/tags", req_type="POST", payload=tag)
