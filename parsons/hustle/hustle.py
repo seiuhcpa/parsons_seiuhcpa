@@ -387,7 +387,6 @@ class Hustle(object):
         logger.info(f"Got {tbl.num_rows} leads.")
         return tbl
 
-
     def create_lead_in_organization(
         self,
         organization_id,
@@ -556,7 +555,9 @@ class Hustle(object):
         `Returns:`
                 ``None``
         """
-
+        # Remove empty custom fields
+        if custom_fields:
+            custom_fields = json_format.remove_empty_keys(custom_fields)
         lead = {
             "firstName": first_name,
             "lastName": last_name,
