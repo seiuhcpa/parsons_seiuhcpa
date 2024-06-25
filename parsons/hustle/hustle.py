@@ -71,8 +71,7 @@ class Hustle(object):
         url = self.uri + endpoint
         self._token_check()
 
-        headers = {"Authorization": f"Bearer {self.auth_token}",
-                   "Content-type": 'application/json'}
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
 
         parameters = {}
         if req_type == "GET":
@@ -337,7 +336,7 @@ class Hustle(object):
         """
 
         lead_status = {"leadId": lead_id, "active": active}
-
+        logger.info(f"Updated {lead_id} lead status to {active} in group {group_id}.")
         return self._request(f"groups/{group_id}/memberships", req_type="PUT", payload=lead_status)
 
     def get_lead(self, lead_id):
